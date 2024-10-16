@@ -1,0 +1,88 @@
+<?php
+$host = 'mysql.jrcf.dev';
+$db = 'escola';
+$user = 'usrapp';
+$pass = '010203';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erro de conexão: " . $e->getMessage());
+}
+
+// Adiciona aluno
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add_aluno') {
+    $nome = $_POST['nome'];
+    $data_nascimento = $_POST['data_nascimento'];
+    $stmt = $pdo->prepare("INSERT INTO alunos (nome, data_nascimento) VALUES (?, ?)");
+    $stmt->execute([$nome, $data_nascimento]);
+}
+
+// Adiciona disciplina
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add_disciplina') {
+    $nome = $_POST['nome'];
+    $stmt = $pdo->prepare("INSERT INTO disciplinas (nome) VALUES (?)");
+    $stmt->execute([$nome]);
+}
+
+// Adiciona avaliação
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add_avaliacao') {
+    $aluno_id = $_POST['aluno_id'];
+    $disciplina_id = $_POST['disciplina_id'];
+    $nota = $_POST['nota'];
+    $stmt = $pdo->prepare("INSERT INTO avaliacoes (aluno_id, disciplina_id, nota) VALUES (?, ?, ?)");
+    $stmt->execute([$aluno_id, $disciplina_id, $nota]);
+}
+?>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciamento de Alunos</title>
+</head>
+<body>
+
+<h1>Adicionar Aluno</h1>
+<form method="POST">
+    Nome: <input type="text" name="nome" required>
+    Data de Nascimento: <input type="date" name="data_nascimento" required>
+    <input type="hidden" name="action" value="add_aluno">
+    <input type="submit" value="Adicionar">
+</form>
+
+<h1>Adicionar Disciplina</h1>
+<form method="POST">
+    Nome: <input type="text" name="nome" required>
+    <input type="hidden" name="action" value="add_disciplina">
+    <input type="submit" value="Adicionar">
+</form>
+
+<h1>Registrar Avaliação</h1>
+<form method="POST">
+    Aluno: 
+    <select name="aluno_id" required>
+        <?php
+        $alunos = $pdo->query("SELECT * FROM alunos")->fetchAll();
+        foreach ($alunos as $aluno) {
+            echo "<option value='{$aluno['id']}'>{$aluno['nome']}</option>";
+        }
+        ?>
+    </select>
+    Disciplina: 
+    <select name="disciplina_id" required>
+        <?php
+        $disciplinas = $pdo->query("SELECT * FROM disciplinas")->fetchAll();
+        foreach ($disciplinas as $disciplina) {
+            echo "<option value='{$disciplina['id']}'>{$disciplina['nome']}</option>";
+        }
+        ?>
+    </select>
+    Nota: <input type="number" name="nota" step="0.01" required>
+    <input type="hidden" name="action" value="add_avaliacao">
+    <input type="submit" value="Registrar Avaliação">
+</form>
+
+</body>
+</html>
